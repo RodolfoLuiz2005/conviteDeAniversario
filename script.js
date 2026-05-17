@@ -91,6 +91,18 @@
             }
         }
 
+        // SINCRONIZAR CONTADOR COM MUDANÇAS DO PAINEL ADMINISTRATIVO
+        window.addEventListener("storage", (e) => {
+            if (e.key === "confirmados") {
+                totalConfirmados = e.newValue || 0;
+                contadorPessoas.innerHTML = totalConfirmados;
+                contadorPessoas.classList.add("pulse");
+                setTimeout(() => {
+                    contadorPessoas.classList.remove("pulse");
+                }, 500);
+            }
+        });
+
         const adminPassword = "Cf182025";
         const btnPainelAdm = document.getElementById("btnPainelAdm");
         const btnAbrirAdmFooter = document.getElementById("btnAbrirAdmFooter");

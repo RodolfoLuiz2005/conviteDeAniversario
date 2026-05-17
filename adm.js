@@ -103,6 +103,12 @@ function limparConfirmacaoPrincipal() {
             `).join("");
         }
 
+        // SINCRONIZAR CONFIRMADOS COM PAINEL PRINCIPAL
+        function sincronizarConfirmados() {
+            const confirmados = convidados.filter(c => c.confirmado).length;
+            localStorage.setItem("confirmados", confirmados);
+        }
+
         // ATUALIZAR ESTATÍSTICAS
         function atualizarEstatisticas() {
             const total = convidados.length;
@@ -114,6 +120,9 @@ function limparConfirmacaoPrincipal() {
             document.getElementById("totalConfirmados").textContent = confirmados;
             document.getElementById("totalPendentes").textContent = pendentes;
             document.getElementById("percentualConfirmacao").textContent = percentual + "%";
+            
+            // Sincronizar com painel principal
+            sincronizarConfirmados();
         }
 
         // ADICIONAR CONVIDADO
@@ -174,12 +183,11 @@ function limparConfirmacaoPrincipal() {
         // RESETAR CONFIRMAÇÕES
         function resetarContadoresFesta() {
             if (confirm("Deseja resetar todas as confirmações? Isso não pode ser desfeito!")) {
-                localStorage.removeItem("confirmados");
                 localStorage.removeItem("jaConfirmou");
                 convidados.forEach(c => c.confirmado = false);
                 salvarDados();
                 atualizarLista();
-                atualizarEstatisticas();
+                atualizarEstatisticas(); // Esta função já sincroniza confirmados
                 mostrarMensagem("Confirmações resetadas!", "sucesso");
             }
         }
@@ -189,9 +197,9 @@ function limparConfirmacaoPrincipal() {
             if (confirm("Deseja limpar TODOS os convidados? Isso não pode ser desfeito!")) {
                 convidados = [];
                 localStorage.removeItem("convidados");
-                localStorage.removeItem("confirmados");
                 localStorage.removeItem("jaConfirmou");
                 salvarDados();
+                sincronizarConfirmados(); // Reseta para 0
                 atualizarLista();
                 atualizarEstatisticas();
                 mostrarMensagem("Todos os dados foram limpos!", "sucesso");
