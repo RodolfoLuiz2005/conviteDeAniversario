@@ -1,3 +1,17 @@
+import { db } from "./firebase.js";
+import {
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    where,
+    serverTimestamp,
+    onSnapshot,
+    deleteDoc,
+    doc,
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+const confirmacoesCollection = collection(db, "confirmacoes");
 
         // DATA DO EVENTO
 
@@ -60,13 +74,36 @@
             document.getElementById("contadorPessoas");
 
         let totalConfirmados =
-            localStorage.getItem("confirmados") || 0;
+            Number(localStorage.getItem("confirmados")) || 0;
 
         contadorPessoas.innerHTML =
             totalConfirmados;
 
         const jaConfirmou =
             localStorage.getItem("jaConfirmou");
+
+        async function loadConfirmadosCount() {
+            try {
+                const snapshot = await getDocs(confirmacoesCollection);
+                totalConfirmados = snapshot.size;
+                contadorPessoas.innerHTML = totalConfirmados;
+                localStorage.setItem("confirmados", totalConfirmados);
+            } catch (error) {
+                console.warn("Não foi possível carregar confirmados do Firestore:", error);
+            }
+        }
+
+        function listenConfirmacoes() {
+            onSnapshot(confirmacoesCollection, (snapshot) => {
+                totalConfirmados = snapshot.size;
+                contadorPessoas.innerHTML = totalConfirmados;
+                localStorage.setItem("confirmados", totalConfirmados);
+                contadorPessoas.classList.add("pulse");
+                setTimeout(() => {
+                    contadorPessoas.classList.remove("pulse");
+                }, 500);
+            });
+        }
 
         if (jaConfirmou === "sim") {
 
@@ -121,9 +158,22 @@
         btnAbrirAdmFooter?.addEventListener("click", abrirPainelAdm);
 
         // FUNÇÃO PARA REINICIALIZAR O CONTADOR
-        function resetarContador() {
+        async function resetarContador() {
+            const confirmacaoDocId = localStorage.getItem("confirmacaoDocId");
+
+            if (confirmacaoDocId) {
+                try {
+                    await deleteDoc(doc(confirmacoesCollection, confirmacaoDocId));
+                } catch (error) {
+                    console.warn("Não foi possível remover confirmação do Firestore:", error);
+                }
+            }
+
             localStorage.removeItem("confirmados");
             localStorage.removeItem("jaConfirmou");
+            localStorage.removeItem("nomeConfirmado");
+            localStorage.removeItem("whatsappConfirmado");
+            localStorage.removeItem("confirmacaoDocId");
             totalConfirmados = 0;
             contadorPessoas.innerHTML = "0";
             btnConfirmar.innerHTML = "<i class=\"bi bi-check-circle-fill\"></i> Confirmar Presença";
@@ -132,7 +182,7 @@
             console.log("Contador de confirmados reiniciado!");
         }
 
-        btnConfirmar.addEventListener("click", () => {
+        btnConfirmar.addEventListener("click", async () => {
             const nome = nomeConfirmacao?.value.trim() || "";
             const whatsapp = whatsappConfirmacao?.value.trim() || "";
 
@@ -146,6 +196,17 @@
                 alert("Por favor, informe seu número de WhatsApp antes de confirmar a presença.");
                 whatsappConfirmacao?.focus();
                 return;
+            }
+
+            try {
+                const docRef = await addDoc(confirmacoesCollection, {
+                    nome,
+                    whatsapp,
+                    createdAt: serverTimestamp(),
+                });
+                localStorage.setItem("confirmacaoDocId", docRef.id);
+            } catch (error) {
+                console.warn("Não foi possível salvar a confirmação no Firestore:", error);
             }
 
             totalConfirmados++;
@@ -190,6 +251,9 @@
             btnConfirmar.style.opacity = ".7";
 
         });
+
+        loadConfirmadosCount();
+        listenConfirmacoes();
 
         // MODAL PRESENTES
 
