@@ -1,15 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
     function isValidConfirmation() {
       return request.resource.data.keys().hasOnly(["nome", "whatsapp", "createdAt"])
         && request.resource.data.nome is string
@@ -38,24 +29,19 @@ service cloud.firestore {
         && request.resource.data.dataAdicao is string;
     }
 
-    match /admins/{userId} {
-      allow read: if signedIn() && request.auth.uid == userId;
-      allow write: if false;
-    }
-
     match /confirmacoes/{docId} {
       allow create: if isValidConfirmation();
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if true;
     }
 
     match /convidados/{docId} {
-      allow read: if isAdmin();
-      allow create, update: if isAdmin() && isValidGuest();
-      allow delete: if isAdmin();
+      allow read: if true;
+      allow create, update: if isValidGuest();
+      allow delete: if true;
     }
 
     match /emails/{docId} {
-      allow read, create, delete: if isAdmin();
+      allow read, create, delete: if true;
       allow update: if false;
     }
   }

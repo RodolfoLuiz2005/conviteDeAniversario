@@ -1,9 +1,4 @@
-import { auth, db } from "./firebase.js";
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { db, isFirebaseReady } from "./firebase.js";
 import {
   collection,
   getDocs,
@@ -20,13 +15,22 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 import { validarWhatsapp, sanitizarEntrada, mostrarToast, exportarCSV } from "./utils.js";
 
-const confirmacoesCollection = collection(db, "confirmacoes");
-const convidadosCollection = collection(db, "convidados");
+const firebaseDisponivel = isFirebaseReady();
+const usandoFirebase = firebaseDisponivel && Boolean(db);
+const confirmacoesCollection = usandoFirebase
+  ? collection(db, "confirmacoes")
+  : null;
+const convidadosCollection = usandoFirebase
+  ? collection(db, "convidados")
+  : null;
 const authSection = document.getElementById("authSection");
 const adminApp = document.getElementById("adminApp");
 const authStatus = document.getElementById("authStatus");
-const adminLoginForm = document.getElementById("adminLoginForm");
 const btnLogout = document.getElementById("btnLogout");
+const adminAuthPassword = window.adminAuthConfig?.password?.trim() || "Cf182026";
+const adminSessionKey = "adminAutenticado";
+const convidadosStorageKey = "adminConvidados";
+const confirmacoesStorageKey = "adminConfirmacoes";
 
 let convidados = [];
 let confirmacoes = [];
@@ -40,8 +44,90 @@ function setAuthStatus(texto, tipo = "") {
   authStatus.className = `auth-status${tipo ? ` ${tipo}` : ""}`;
 }
 
+function painelDisponivel() {
+  if (usandoFirebase && confirmacoesCollection && convidadosCollection) {
+    return true;
+  }
+
+  return true;
+}
+
+function garantirAdminAuthConfig() {
+  if (adminAuthPassword && !adminAuthPassword.includes("__")) {
+    return true;
+  }
+
+  mostrarTelaLogin();
+  setAuthStatus("Senha administrativa nao configurada. Defina ADMIN_PASSWORD para liberar o painel.", "erro");
+  return false;
+}
+
+function adminAutenticado() {
+  return sessionStorage.getItem(adminSessionKey) === "sim";
+}
+
+function salvarSessaoAdmin(autenticado) {
+  if (autenticado) {
+    sessionStorage.setItem(adminSessionKey, "sim");
+    return;
+  }
+
+  sessionStorage.removeItem(adminSessionKey);
+}
+
+async function solicitarAcessoAdmin() {
+  if (!garantirAdminAuthConfig()) {
+    return false;
+  }
+
+  const senha = window.prompt("Digite a senha do painel administrativo:");
+
+  if (senha === null) {
+    setAuthStatus("Acesso cancelado.");
+    window.location.href = "index.html";
+    return false;
+  }
+
+  if (senha !== adminAuthPassword) {
+    setAuthStatus("Senha incorreta.");
+    mostrarToast("Senha administrativa incorreta.", "erro");
+    return false;
+  }
+
+  salvarSessaoAdmin(true);
+  setAuthStatus("");
+  return true;
+}
+
+function lerColecaoLocal(chave) {
+  try {
+    const bruto = localStorage.getItem(chave);
+    const dados = bruto ? JSON.parse(bruto) : [];
+    return Array.isArray(dados) ? dados : [];
+  } catch (error) {
+    console.error(`Erro ao ler dados locais de ${chave}:`, error);
+    return [];
+  }
+}
+
+function salvarColecaoLocal(chave, dados) {
+  localStorage.setItem(chave, JSON.stringify(dados));
+}
+
+function gerarIdLocal(prefixo) {
+  return `${prefixo}-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+}
+
+function ordenarPorCriacaoDesc(lista) {
+  return [...lista].sort((a, b) => {
+    const dataA = new Date(a.createdAt || a.dataAdicao || 0).getTime();
+    const dataB = new Date(b.createdAt || b.dataAdicao || 0).getTime();
+    return dataB - dataA;
+  });
+}
+
 function mostrarTelaLogin() {
-  if (authSection) authSection.hidden = false;
+  if (authSection) authSection.hidden = true;
   if (adminApp) adminApp.hidden = true;
 }
 
@@ -68,6 +154,10 @@ function limparEstadoAdmin() {
 }
 
 async function validarPermissaoAdmin() {
+  if (!usandoFirebase) {
+    return;
+  }
+
   const q = query(convidadosCollection, limit(1));
   await getDocs(q);
 }
@@ -79,6 +169,22 @@ async function carregarConfirmacaoPrincipal() {
 
   if (!statusEl || !nomeEl || !whatsappEl) {
     console.error("Elementos do DOM nao encontrados");
+    return;
+  }
+
+  if (!usandoFirebase) {
+    const ultimaConfirmacao = ordenarPorCriacaoDesc(confirmacoes)[0];
+
+    if (ultimaConfirmacao) {
+      statusEl.textContent = "Ultima confirmacao registrada localmente:";
+      nomeEl.textContent = `Nome: ${ultimaConfirmacao.nome || "N/A"}`;
+      whatsappEl.textContent = `WhatsApp: ${ultimaConfirmacao.whatsapp || "N/A"}`;
+      return;
+    }
+
+    statusEl.textContent = "Ainda nao ha confirmacoes realizadas pelo painel principal.";
+    nomeEl.textContent = "";
+    whatsappEl.textContent = "";
     return;
   }
 
@@ -108,7 +214,10 @@ async function limparConfirmacaoPrincipal() {
   const confirmacaoDocId = localStorage.getItem("confirmacaoDocId");
   const existiaConfirmacao = localStorage.getItem("jaConfirmou") === "sim";
 
-  if (confirmacaoDocId) {
+  if (!usandoFirebase) {
+    confirmacoes = [];
+    salvarColecaoLocal(confirmacoesStorageKey, confirmacoes);
+  } else if (confirmacaoDocId && confirmacoesCollection) {
     try {
       await deleteDoc(doc(confirmacoesCollection, confirmacaoDocId));
     } catch (error) {
@@ -132,6 +241,13 @@ async function limparConfirmacaoPrincipal() {
 }
 
 async function carregarConvidados() {
+  if (!usandoFirebase) {
+    convidados = ordenarPorCriacaoDesc(lerColecaoLocal(convidadosStorageKey));
+    atualizarLista();
+    atualizarEstatisticas();
+    return;
+  }
+
   const q = query(convidadosCollection, orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
   convidados = snapshot.docs.map((docItem) => ({
@@ -143,6 +259,11 @@ async function carregarConvidados() {
 }
 
 async function carregarConfirmacoes() {
+  if (!usandoFirebase) {
+    confirmacoes = ordenarPorCriacaoDesc(lerColecaoLocal(confirmacoesStorageKey));
+    return;
+  }
+
   const q = query(confirmacoesCollection, orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
   confirmacoes = snapshot.docs.map((docItem) => ({
@@ -152,6 +273,10 @@ async function carregarConfirmacoes() {
 }
 
 function listenConvidados() {
+  if (!usandoFirebase) {
+    return;
+  }
+
   const q = query(convidadosCollection, orderBy("createdAt", "desc"));
   unsubscribeConvidados = onSnapshot(
     q,
@@ -171,6 +296,10 @@ function listenConvidados() {
 }
 
 function listenConfirmacoes() {
+  if (!usandoFirebase) {
+    return;
+  }
+
   const q = query(confirmacoesCollection, orderBy("createdAt", "desc"));
   unsubscribeConfirmacoes = onSnapshot(
     q,
@@ -305,12 +434,22 @@ async function adicionarConvidado() {
     confirmado: status === "confirmado",
     notas,
     dataAdicao: new Date().toLocaleDateString("pt-BR"),
-    createdAt: serverTimestamp(),
+    createdAt: new Date().toISOString(),
   };
 
   try {
-    const docRef = await addDoc(convidadosCollection, novoConvidado);
-    convidados.unshift({ ...novoConvidado, docId: docRef.id });
+    if (usandoFirebase) {
+      const docRef = await addDoc(convidadosCollection, {
+        ...novoConvidado,
+        createdAt: serverTimestamp(),
+      });
+      convidados.unshift({ ...novoConvidado, docId: docRef.id });
+    } else {
+      const convidadoLocal = { ...novoConvidado, docId: gerarIdLocal("convidado") };
+      convidados.unshift(convidadoLocal);
+      salvarColecaoLocal(convidadosStorageKey, convidados);
+    }
+
     mostrarToast("Convidado adicionado com sucesso!", "sucesso");
     atualizarLista();
     atualizarEstatisticas();
@@ -333,9 +472,19 @@ async function confirmarConvidado(docId) {
   }
 
   try {
-    await updateDoc(doc(convidadosCollection, convidado.docId), {
-      confirmado: true,
-    });
+    if (usandoFirebase) {
+      await updateDoc(doc(convidadosCollection, convidado.docId), {
+        confirmado: true,
+      });
+    } else {
+      convidados = convidados.map((item) =>
+        item.docId === convidado.docId ? { ...item, confirmado: true } : item
+      );
+      salvarColecaoLocal(convidadosStorageKey, convidados);
+      atualizarLista();
+      atualizarEstatisticas();
+    }
+
     mostrarToast(`${convidado.nome} confirmado!`, "sucesso");
   } catch (error) {
     console.error("Erro ao confirmar convidado:", error);
@@ -353,7 +502,15 @@ async function deletarConvidado(docId) {
 
   if (confirm(`Deseja deletar ${convidado.nome}?`)) {
     try {
-      await deleteDoc(doc(convidadosCollection, convidado.docId));
+      if (usandoFirebase) {
+        await deleteDoc(doc(convidadosCollection, convidado.docId));
+      } else {
+        convidados = convidados.filter((item) => item.docId !== convidado.docId);
+        salvarColecaoLocal(convidadosStorageKey, convidados);
+        atualizarLista();
+        atualizarEstatisticas();
+      }
+
       mostrarToast(`${convidado.nome} removido!`, "sucesso");
     } catch (error) {
       console.error("Erro ao deletar convidado:", error);
@@ -365,15 +522,23 @@ async function deletarConvidado(docId) {
 async function resetarContadoresFesta() {
   if (confirm("Deseja resetar todas as confirmacoes? Isso nao pode ser desfeito!")) {
     try {
-      const batch = writeBatch(db);
-      convidados.forEach((item) => {
-        if (item.docId) {
-          batch.update(doc(convidadosCollection, item.docId), {
-            confirmado: false,
-          });
-        }
-      });
-      await batch.commit();
+      if (usandoFirebase) {
+        const batch = writeBatch(db);
+        convidados.forEach((item) => {
+          if (item.docId) {
+            batch.update(doc(convidadosCollection, item.docId), {
+              confirmado: false,
+            });
+          }
+        });
+        await batch.commit();
+      } else {
+        convidados = convidados.map((item) => ({ ...item, confirmado: false }));
+        salvarColecaoLocal(convidadosStorageKey, convidados);
+        atualizarLista();
+        atualizarEstatisticas();
+      }
+
       mostrarToast("Confirmacoes resetadas!", "sucesso");
     } catch (error) {
       console.error("Erro ao resetar confirmacoes:", error);
@@ -385,13 +550,28 @@ async function resetarContadoresFesta() {
 async function limparTodosDados() {
   if (confirm("Deseja limpar TODOS os convidados? Isso nao pode ser desfeito!")) {
     try {
-      const snapshot = await getDocs(convidadosCollection);
-      const batch = writeBatch(db);
-      snapshot.docs.forEach((docItem) => {
-        batch.delete(doc(convidadosCollection, docItem.id));
-      });
-      await batch.commit();
+      if (usandoFirebase) {
+        const snapshot = await getDocs(convidadosCollection);
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((docItem) => {
+          batch.delete(doc(convidadosCollection, docItem.id));
+        });
+        await batch.commit();
+      } else {
+        convidados = [];
+        confirmacoes = [];
+        salvarColecaoLocal(convidadosStorageKey, convidados);
+        salvarColecaoLocal(confirmacoesStorageKey, confirmacoes);
+        atualizarLista();
+        atualizarEstatisticas();
+        await carregarConfirmacaoPrincipal();
+      }
+
       localStorage.removeItem("jaConfirmou");
+      localStorage.removeItem("confirmados");
+      localStorage.removeItem("confirmacaoDocId");
+      localStorage.removeItem("nomeConfirmado");
+      localStorage.removeItem("whatsappConfirmado");
       mostrarToast("Todos os dados foram limpos!", "sucesso");
     } catch (error) {
       console.error("Erro ao limpar todos os convidados:", error);
@@ -401,6 +581,11 @@ async function limparTodosDados() {
 }
 
 function exportarDados() {
+  if (!convidados.length) {
+    mostrarToast("Nao ha convidados para exportar.", "aviso");
+    return;
+  }
+
   const dados = convidados.map((convidado) => ({
     nome: convidado.nome,
     whatsapp: convidado.telefone,
@@ -418,40 +603,35 @@ if (filtroEl) {
   filtroEl.addEventListener("input", atualizarLista);
 }
 
-adminLoginForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const email = document.getElementById("adminEmail")?.value?.trim() || "";
-  const senha = document.getElementById("adminPassword")?.value || "";
-
-  if (!email || !senha) {
-    setAuthStatus("Preencha email e senha para entrar.", "erro");
-    return;
-  }
-
-  setAuthStatus("Entrando...", "sucesso");
-
-  try {
-    await signInWithEmailAndPassword(auth, email, senha);
-    setAuthStatus("");
-  } catch (error) {
-    console.error("Erro ao autenticar administrador:", error);
-    setAuthStatus("Nao foi possivel entrar. Verifique as credenciais.", "erro");
-  }
-});
-
 btnLogout?.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-    mostrarToast("Sessao encerrada com sucesso.", "sucesso");
-  } catch (error) {
-    console.error("Erro ao sair do painel:", error);
-    mostrarToast("Erro ao encerrar sessao.", "erro");
+  salvarSessaoAdmin(false);
+  limparEstadoAdmin();
+  mostrarTelaLogin();
+  mostrarToast("Sessao encerrada com sucesso.", "sucesso");
+
+  const acessoLiberado = await solicitarAcessoAdmin();
+  if (acessoLiberado) {
+    await iniciarPainelAdmin();
   }
 });
 
 async function iniciarPainelAdmin() {
+  if (!painelDisponivel()) {
+    return;
+  }
+
+  if (!adminAutenticado()) {
+    const acessoLiberado = await solicitarAcessoAdmin();
+    if (!acessoLiberado) {
+      return;
+    }
+  }
+
   if (adminAppInicializado) {
     mostrarPainel();
+    if (!usandoFirebase) {
+      setAuthStatus("Painel em modo local. Os dados sao salvos neste navegador.", "sucesso");
+    }
     return;
   }
 
@@ -463,31 +643,20 @@ async function iniciarPainelAdmin() {
   listenConfirmacoes();
   adminAppInicializado = true;
   mostrarPainel();
+  if (!usandoFirebase) {
+    setAuthStatus("Painel em modo local. Os dados sao salvos neste navegador.", "sucesso");
+  }
 }
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    limparEstadoAdmin();
+if (garantirAdminAuthConfig()) {
+  iniciarPainelAdmin().catch((error) => {
+    console.error("Erro ao iniciar painel administrativo:", error);
     mostrarTelaLogin();
-    setAuthStatus("Entre com uma conta autorizada para abrir o painel.");
-    return;
-  }
-
-  setAuthStatus("Validando acesso...", "sucesso");
-
-  try {
-    await iniciarPainelAdmin();
-    setAuthStatus("");
-  } catch (error) {
-    console.error("Acesso administrativo negado:", error);
-    await signOut(auth).catch(() => {});
-    mostrarTelaLogin();
-    setAuthStatus(
-      "Sua conta autenticou, mas nao tem permissao no Firestore. Autorize o UID em admins/{uid}.",
-      "erro"
-    );
-  }
-});
+    setAuthStatus("Nao foi possivel carregar o painel administrativo.", "erro");
+  });
+} else {
+  mostrarTelaLogin();
+}
 
 window.addEventListener("beforeunload", () => {
   limparEstadoAdmin();

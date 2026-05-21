@@ -10,6 +10,7 @@ services:
       - "${PORT:-8080}:8080"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - FIREBASE_API_KEY=${FIREBASE_API_KEY}
       - FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}

@@ -25,6 +25,7 @@ sed -i "s/__FIREBASE_STORAGE_BUCKET__/${FIREBASE_STORAGE_BUCKET}/g" "$SITE_DIR/a
 sed -i "s/__FIREBASE_MESSAGING_SENDER_ID__/${FIREBASE_MESSAGING_SENDER_ID}/g" "$SITE_DIR/adm.html"
 sed -i "s/__FIREBASE_APP_ID__/${FIREBASE_APP_ID}/g" "$SITE_DIR/adm.html"
 sed -i "s/__FIREBASE_MEASUREMENT_ID__/${FIREBASE_MEASUREMENT_ID}/g" "$SITE_DIR/adm.html"
+sed -i "s/__ADMIN_PASSWORD__/${ADMIN_PASSWORD}/g" "$SITE_DIR/adm.html"
 
 echo "Configuracao injetada!"
 echo "Iniciando servidor..."

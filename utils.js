@@ -103,6 +103,10 @@ if (!document.getElementById("toast-styles")) {
 
 // Export de dados
 export function exportarCSV(dados, nomeArquivo = "dados.csv") {
+  if (!Array.isArray(dados) || dados.length === 0) {
+    throw new Error("Nao ha dados para exportar.");
+  }
+
   const headers = Object.keys(dados[0]);
   const csv = [
     headers.join(","),

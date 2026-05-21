@@ -1,4 +1,4 @@
-import { db } from "./firebase.js";
+import { db, isFirebaseReady } from "./firebase.js";
 import {
   collection,
   addDoc,
@@ -16,7 +16,10 @@ import {
   inicializarDarkMode,
 } from "./utils.js";
 
-const confirmacoesCollection = collection(db, "confirmacoes");
+const firebaseDisponivel = isFirebaseReady();
+const confirmacoesCollection = firebaseDisponivel
+  ? collection(db, "confirmacoes")
+  : null;
 
 // Dark Mode
 const darkMode = inicializarDarkMode();
@@ -29,8 +32,8 @@ const dataEvento = new Date("September 19, 2026 12:00:00").getTime();
 
 // Validacao de injecao de variaveis
 function validarFirebaseConfig() {
-  if (!window.firebaseConfig?.projectId || window.firebaseConfig.projectId.includes("__")) {
-    console.warn("Firebase config nao injetado. Verifique as variaveis de ambiente.");
+  if (!firebaseDisponivel) {
+    console.warn("Firebase indisponivel. Verifique as variaveis de ambiente.");
   }
 }
 
@@ -116,7 +119,7 @@ btnAbrirAdmFooter?.addEventListener("click", abrirPainelAdm);
 async function resetarContador() {
   const confirmacaoDocId = localStorage.getItem("confirmacaoDocId");
 
-  if (confirmacaoDocId) {
+  if (confirmacaoDocId && confirmacoesCollection) {
     try {
       await deleteDoc(doc(confirmacoesCollection, confirmacaoDocId));
     } catch (error) {
@@ -130,14 +133,21 @@ async function resetarContador() {
   localStorage.removeItem("whatsappConfirmado");
   localStorage.removeItem("confirmacaoDocId");
   totalConfirmados = 0;
+  isConfirmando = false;
   if (contadorPessoas) contadorPessoas.innerHTML = "Privado";
   if (btnConfirmar) {
     btnConfirmar.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirmar Presenca';
     btnConfirmar.disabled = false;
     btnConfirmar.style.opacity = "1";
   }
-  if (nomeConfirmacao) nomeConfirmacao.disabled = false;
-  if (whatsappConfirmacao) whatsappConfirmacao.disabled = false;
+  if (nomeConfirmacao) {
+    nomeConfirmacao.disabled = false;
+    nomeConfirmacao.value = "";
+  }
+  if (whatsappConfirmacao) {
+    whatsappConfirmacao.disabled = false;
+    whatsappConfirmacao.value = "";
+  }
   console.log("Contador de confirmados reiniciado!");
 }
 
@@ -145,6 +155,11 @@ window.resetarContador = resetarContador;
 
 if (btnConfirmar) {
   btnConfirmar.addEventListener("click", async () => {
+    if (!firebaseDisponivel || !confirmacoesCollection) {
+      mostrarToast("Confirmacao indisponivel no momento. Configure o Firebase.", "erro");
+      return;
+    }
+
     const nome = sanitizarEntrada(nomeConfirmacao?.value || "");
     const whatsapp = sanitizarEntrada(whatsappConfirmacao?.value || "");
 
@@ -218,6 +233,7 @@ if (btnConfirmar) {
       mostrarToast("Erro ao confirmar presenca. Tente novamente.", "erro");
       btnConfirmar.disabled = false;
       btnConfirmar.innerHTML = originalText;
+    } finally {
       isConfirmando = false;
     }
   });

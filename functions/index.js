@@ -19,6 +19,11 @@ exports.enviarConfirmacao = functions.firestore
   .onCreate(async (snap) => {
     const { nome, email, whatsapp, createdAt } = snap.data();
 
+    if (!email) {
+      console.log("Confirmacao sem email; envio ao convidado ignorado.");
+      return null;
+    }
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -44,6 +49,7 @@ exports.enviarConfirmacao = functions.firestore
     try {
       await transporter.sendMail(mailOptions);
       console.log("Email enviado para:", email);
+      return null;
     } catch (error) {
       console.error("Erro ao enviar email:", error);
       throw error;
@@ -64,7 +70,7 @@ exports.notificarOrganizador = functions.firestore
       html: `
         <h3>Nova confirmação de presença!</h3>
         <p><strong>${nome}</strong> confirmou presença.</p>
-        <p>Email: ${email}</p>
+        <p>Email: ${email || "Nao informado"}</p>
         <p>WhatsApp: ${whatsapp}</p>
       `,
     };
@@ -72,8 +78,10 @@ exports.notificarOrganizador = functions.firestore
     try {
       await transporter.sendMail(mailOptions);
       console.log("Notificação enviada ao organizador");
+      return null;
     } catch (error) {
       console.error("Erro ao enviar notificação:", error);
+      return null;
     }
   });
 

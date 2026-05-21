@@ -5,20 +5,27 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/12.13.0/firebas
 
 // Load Firebase configuration from window object (injected via HTML)
 const firebaseConfig = window.firebaseConfig;
-
-if (
+const firebaseConfigInvalido =
   !firebaseConfig?.apiKey ||
   !firebaseConfig?.projectId ||
   Object.values(firebaseConfig).some(
     (value) => typeof value === "string" && value.includes("__")
-  )
-) {
-  throw new Error("Firebase config ausente ou nao injetado.");
+  );
+
+let auth = null;
+let db = null;
+
+if (firebaseConfigInvalido) {
+  console.warn("Firebase config ausente ou nao injetado.");
+} else {
+  // Initialize Firebase only when config is valid.
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+export function isFirebaseReady() {
+  return !firebaseConfigInvalido && Boolean(auth) && Boolean(db);
+}
 
 export { auth, db };
