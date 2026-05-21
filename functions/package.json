@@ -1,0 +1,19 @@
+{
+  "name": "convite-de-aniversario-functions",
+  "version": "1.0.0",
+  "description": "Cloud Functions para convite de aniversário",
+  "main": "index.js",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.11.1",
+    "firebase-functions": "^4.5.0",
+    "nodemailer": "^6.9.7"
+  },
+  "engines": {
+    "node": "18"
+  }
+}

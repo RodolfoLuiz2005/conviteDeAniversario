@@ -1,0 +1,52 @@
+name: Security & Linting
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for hardcoded secrets
+        run: |
+          if grep -r "Cf182025" . --exclude-dir=node_modules --exclude-dir=.git; then
+            echo "ERROR: Hardcoded password found!"
+            exit 1
+          fi
+          echo "✓ No hardcoded secrets detected"
+
+      - name: Verify environment variables in HTML
+        run: |
+          if grep -q "__FIREBASE_API_KEY__" index.html; then
+            echo "✓ Environment variables correctly placeholder in HTML"
+          else
+            echo "WARNING: Placeholders not found in HTML"
+          fi
+
+  dockerfile-lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          ignore: DL3018,DL3008

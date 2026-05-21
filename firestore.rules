@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isValidConfirmation() {
+      return request.resource.data.keys().hasOnly(["nome", "whatsapp", "createdAt"])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 3
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.whatsapp is string
+        && request.resource.data.whatsapp.size() >= 10
+        && request.resource.data.whatsapp.size() <= 20;
+    }
+
+    function isValidGuest() {
+      return request.resource.data.keys().hasOnly([
+          "nome",
+          "telefone",
+          "confirmado",
+          "notas",
+          "dataAdicao",
+          "createdAt"
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 3
+        && request.resource.data.nome.size() <= 100
+        && (!("telefone" in request.resource.data) || request.resource.data.telefone is string)
+        && request.resource.data.confirmado is bool
+        && (!("notas" in request.resource.data) || request.resource.data.notas is string)
+        && request.resource.data.dataAdicao is string;
+    }
+
+    match /admins/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    match /confirmacoes/{docId} {
+      allow create: if isValidConfirmation();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /convidados/{docId} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin() && isValidGuest();
+      allow delete: if isAdmin();
+    }
+
+    match /emails/{docId} {
+      allow read, create, delete: if isAdmin();
+      allow update: if false;
+    }
+  }
+}

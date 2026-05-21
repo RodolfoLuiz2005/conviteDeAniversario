@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Painel administrativo para gerenciar a festa de aniversário" />
     <title>Painel Administrativo - Festa</title>
 
     <!-- Google Fonts -->
@@ -13,11 +14,103 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <link rel="stylesheet" href="admstyle.css">
+
+    <!-- Firebase Configuration from Environment -->
+    <script>
+      window.firebaseConfig = {
+        apiKey: "__FIREBASE_API_KEY__",
+        authDomain: "__FIREBASE_AUTH_DOMAIN__",
+        projectId: "__FIREBASE_PROJECT_ID__",
+        storageBucket: "__FIREBASE_STORAGE_BUCKET__",
+        messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
+        appId: "__FIREBASE_APP_ID__",
+        measurementId: "__FIREBASE_MEASUREMENT_ID__"
+      };
+    </script>
+    <style>
+        .auth-shell {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #f5f7ff 0%, #eef3ff 100%);
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(35, 58, 120, 0.15);
+            padding: 32px;
+        }
+
+        .auth-card h1 {
+            margin-bottom: 8px;
+        }
+
+        .auth-card p {
+            margin-bottom: 24px;
+            color: #5b6475;
+        }
+
+        .auth-card .form-group {
+            margin-bottom: 16px;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid #d9dfef;
+            font-size: 1rem;
+        }
+
+        .auth-card button {
+            width: 100%;
+        }
+
+        .auth-status {
+            min-height: 24px;
+            margin-top: 12px;
+            font-size: 0.95rem;
+        }
+
+        .auth-status.erro {
+            color: #b3261e;
+        }
+
+        .auth-status.sucesso {
+            color: #166534;
+        }
+    </style>
 </head>
 
 <body>
 
-    <div class="container">
+    <section id="authSection" class="auth-shell">
+        <div class="auth-card">
+            <h1>Painel Administrativo</h1>
+            <p>Entre com sua conta autorizada do Firebase para acessar os convidados e confirmações.</p>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminEmail">Email</label>
+                    <input type="email" id="adminEmail" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Senha</label>
+                    <input type="password" id="adminPassword" autocomplete="current-password" required>
+                </div>
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    Entrar
+                </button>
+            </form>
+            <div id="authStatus" class="auth-status" aria-live="polite"></div>
+        </div>
+    </section>
+
+    <div id="adminApp" class="container" hidden>
 
         <!-- HEADER -->
         <header style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -26,12 +119,18 @@
                     <i class="bi bi-calendar-check"></i>
                     Painel Administrativo da Festa
                 </h1>
-                <p>Gerencie os convidados e confirmações da festa de Maria Eduarda</p>
+                <p>Gerencie os convidados e confirmações da festa de Brenda Almeida</p>
             </div>
-            <a href="index.html" style="padding: 10px 20px; background: #667eea; color: white; border-radius: 10px; text-decoration: none; display: flex; align-items: center; gap: 8px; font-weight: 600; transition: 0.3s; white-space: nowrap; height: fit-content;" onmouseover="this.style.background='#5568d3'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.background='#667eea'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                <i class="bi bi-arrow-left"></i>
-                Voltar
-            </a>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button id="btnLogout" type="button" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Sair
+                </button>
+                <a href="index.html" style="padding: 10px 20px; background: #667eea; color: white; border-radius: 10px; text-decoration: none; display: flex; align-items: center; gap: 8px; font-weight: 600; transition: 0.3s; white-space: nowrap; height: fit-content;" onmouseover="this.style.background='#5568d3'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.background='#667eea'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                    <i class="bi bi-arrow-left"></i>
+                    Voltar
+                </a>
+            </div>
         </header>
 
         <!-- DASHBOARD ESTATÍSTICAS -->
@@ -100,7 +199,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="telefonConvidado">Telefone</label>
+                    <label for="telefonConvidado">WhatsApp</label>
                     <input type="tel" id="telefonConvidado" placeholder="Ex: 81 9 9999-9999">
                 </div>
             </div>
@@ -137,9 +236,13 @@
 
             <div class="botoes" style="margin-bottom: 20px;">
                 <input type="text" id="filtro" placeholder="Buscar convidado..." style="margin: 0; flex: 1;">
+                <button class="btn btn-info btn-pequeno" onclick="exportarDados()" title="Exportar dados como CSV">
+                    <i class="bi bi-download"></i>
+                    Exportar CSV
+                </button>
                 <button class="btn btn-warning btn-pequeno" onclick="resetarContadoresFesta()">
                     <i class="bi bi-arrow-clockwise"></i>
-                    Resetar Confirmações
+                    Resetar
                 </button>
                 <button class="btn btn-danger btn-pequeno" onclick="limparTodosDados()">
                     <i class="bi bi-trash"></i>

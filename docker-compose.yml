@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  convite-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: convite-aniversario
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - FIREBASE_API_KEY=${FIREBASE_API_KEY}
+      - FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
+      - FIREBASE_MESSAGING_SENDER_ID=${FIREBASE_MESSAGING_SENDER_ID}
+      - FIREBASE_APP_ID=${FIREBASE_APP_ID}
+      - FIREBASE_MEASUREMENT_ID=${FIREBASE_MEASUREMENT_ID}
+      - PORT=8080
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    networks:
+      - convite-network
+    restart: unless-stopped
+
+networks:
+  convite-network:
+    driver: bridge
