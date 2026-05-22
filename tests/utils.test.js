@@ -55,6 +55,6 @@ describe("HTML Escape", () => {
   });
 
   test("deve escapar quotes", () => {
-    expect(escapeHtml('foo"bar')).toBe('foo&quot;bar');
+    expect(escapeHtml("foo\"bar")).toBe("foo&quot;bar");
   });
 });

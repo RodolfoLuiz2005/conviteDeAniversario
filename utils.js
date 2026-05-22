@@ -7,7 +7,7 @@ export function validarWhatsapp(numero) {
 export function formatarWhatsapp(numero) {
   const apenasNumeros = numero.replace(/\D/g, "");
   const numeros = apenasNumeros.slice(-11);
-  
+
   if (numeros.length === 11) {
     return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
   }
@@ -28,7 +28,7 @@ export function escapeHtml(text) {
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
-    '"': "&quot;",
+    "\"": "&quot;",
     "'": "&#039;",
   };
   return text.replace(/[&<>"']/g, (m) => map[m]);
@@ -181,4 +181,39 @@ export function inicializarDarkMode() {
     },
     isDark: () => html.getAttribute("data-theme") === "dark",
   };
+}
+
+// Fallback Storage (Firebase offline)
+export function salvarConvidadoLocalmente(nome, whatsapp) {
+  try {
+    const convidados = JSON.parse(localStorage.getItem("convidados_local") || "[]");
+    const novoConvidado = {
+      id: Date.now().toString(),
+      nome,
+      whatsapp,
+      confirmado: true,
+      dataAdicao: new Date().toLocaleDateString("pt-BR"),
+      hora: new Date().toLocaleTimeString("pt-BR"),
+      sincronizado: false, // Marcado para sincronizar quando Firebase voltar
+    };
+    convidados.push(novoConvidado);
+    localStorage.setItem("convidados_local", JSON.stringify(convidados));
+    return novoConvidado;
+  } catch (error) {
+    console.error("Erro ao salvar convidado localmente:", error);
+    return null;
+  }
+}
+
+export function obterConvidadosLocais() {
+  try {
+    return JSON.parse(localStorage.getItem("convidados_local") || "[]");
+  } catch (error) {
+    console.error("Erro ao obter convidados locais:", error);
+    return [];
+  }
+}
+
+export function contarConvidadosLocais() {
+  return obterConvidadosLocais().length;
 }

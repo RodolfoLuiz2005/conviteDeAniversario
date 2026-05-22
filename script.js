@@ -1,280 +1,318 @@
-import { db, isFirebaseReady } from "./firebase.js";
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  deleteDoc,
-  doc,
-} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-import {
-  validarWhatsapp,
-  formatarWhatsapp,
-  validarNome,
-  sanitizarEntrada,
-  mostrarToast,
-  RateLimiter,
-  inicializarDarkMode,
-} from "./utils.js";
+/* eslint-disable no-console */
+console.log("=== SCRIPT.JS INICIANDO ===");
 
-const firebaseDisponivel = isFirebaseReady();
-const confirmacoesCollection = firebaseDisponivel
-  ? collection(db, "confirmacoes")
-  : null;
-
-// Dark Mode
-const darkMode = inicializarDarkMode();
-
-// Rate Limiter
-const rateLimiter = new RateLimiter(3, 3600000); // 3 tentativas por hora
-
-// DATA DO EVENTO
-const dataEvento = new Date("September 19, 2026 12:00:00").getTime();
-
-// Validacao de injecao de variaveis
-function validarFirebaseConfig() {
-  if (!firebaseDisponivel) {
-    console.warn("Firebase indisponivel. Verifique as variaveis de ambiente.");
-  }
-}
-
-validarFirebaseConfig();
-
-let isConfirmando = false;
-
-const atualizarContador = () => {
-  const agora = new Date().getTime();
-  const distancia = dataEvento - agora;
-
-  const dias = Math.floor(distancia / (1000 * 60 * 60 * 24));
-  const horas = Math.floor((distancia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutos = Math.floor((distancia % (1000 * 60 * 60)) / (1000 * 60));
-  const segundos = Math.floor((distancia % (1000 * 60)) / 1000);
-
-  const diasEl = document.getElementById("dias");
-  const horasEl = document.getElementById("horas");
-  const minutosEl = document.getElementById("minutos");
-  const segundosEl = document.getElementById("segundos");
-
-  if (diasEl) diasEl.innerHTML = String(dias).padStart(2, "0");
-  if (horasEl) horasEl.innerHTML = String(horas).padStart(2, "0");
-  if (minutosEl) minutosEl.innerHTML = String(minutos).padStart(2, "0");
-  if (segundosEl) segundosEl.innerHTML = String(segundos).padStart(2, "0");
-
-  if (distancia < 0) {
-    const contadorEl = document.querySelector(".contador");
-    if (contadorEl) {
-      contadorEl.innerHTML = "<h2>A festa comecou!</h2>";
-    }
-  }
+// Helper para pegar elementos
+const el = (id) => {
+  const element = document.getElementById(id);
+  console.log(`el("${id}"):`, element ? "✅ Encontrado" : "❌ NÃO ENCONTRADO");
+  return element;
 };
 
-setInterval(atualizarContador, 1000);
-atualizarContador();
+// Esperar DOM estar pronto
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("\n🚀 === DOM PRONTO ===\n");
 
-// CONFIRMAR PRESENCA
-const btnConfirmar = document.getElementById("btnConfirmar");
-const nomeConfirmacao = document.getElementById("nomeConfirmacao");
-const whatsappConfirmacao = document.getElementById("whatsappConfirmacao");
-const contadorPessoas = document.getElementById("contadorPessoas");
-const jaConfirmou = localStorage.getItem("jaConfirmou");
+  // ============================================
+  // CONTADOR REGRESSIVO
+  // ============================================
+  console.log("📍 Inicializando contador regressivo...");
+  function updateCounter() {
+    const target = new Date("2026-09-19T12:00:00").getTime();
+    const now = Date.now();
+    const diff = target - now;
 
-let totalConfirmados = Number(localStorage.getItem("confirmados")) || 0;
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diff % (1000 * 60)) / 1000);
 
-if (contadorPessoas) {
-  contadorPessoas.innerHTML = jaConfirmou === "sim" ? String(totalConfirmados) : "Privado";
-}
+    const dias = el("dias");
+    const horas = el("horas");
+    const minutos = el("minutos");
+    const segundos = el("segundos");
 
-if (jaConfirmou === "sim") {
-  if (btnConfirmar) {
-    btnConfirmar.innerHTML = "Presenca Confirmada";
-    btnConfirmar.disabled = true;
-    btnConfirmar.style.opacity = ".7";
+    if (dias) dias.textContent = String(d).padStart(2, "0");
+    if (horas) horas.textContent = String(h).padStart(2, "0");
+    if (minutos) minutos.textContent = String(m).padStart(2, "0");
+    if (segundos) segundos.textContent = String(s).padStart(2, "0");
   }
 
-  const nomeSalvo = localStorage.getItem("nomeConfirmado") || "";
-  const whatsappSalvo = localStorage.getItem("whatsappConfirmado") || "";
+  updateCounter();
+  setInterval(updateCounter, 1000);
+  console.log("✅ Contador regressivo iniciado\n");
 
-  if (nomeConfirmacao) {
-    nomeConfirmacao.value = nomeSalvo;
-    nomeConfirmacao.disabled = true;
+  // ============================================
+  // VERIFICAR SE JÁ CONFIRMOU
+  // ============================================
+  console.log("📍 Verificando se já confirmou...");
+  const jaConfirmou = localStorage.getItem("jaConfirmou");
+  console.log("localStorage.getItem('jaConfirmou'):", jaConfirmou);
+  
+  const nomeConfirmado = localStorage.getItem("nomeConfirmado");
+  const whatsappConfirmado = localStorage.getItem("whatsappConfirmado");
+  console.log("nomeConfirmado:", nomeConfirmado);
+  console.log("whatsappConfirmado:", whatsappConfirmado);
+
+  if (jaConfirmou === "sim") {
+    console.log("✅ Usuário JÁ CONFIRMOU anteriormente\n");
+    
+    const nomeInput = el("nomeConfirmacao");
+    const whatsappInput = el("whatsappConfirmacao");
+    const btnConfirmar = el("btnConfirmar");
+
+    if (nomeInput) {
+      nomeInput.value = nomeConfirmado || "";
+      nomeInput.disabled = true;
+      console.log("✅ Nome input preenchido e desabilitado");
+    }
+
+    if (whatsappInput) {
+      whatsappInput.value = whatsappConfirmado || "";
+      whatsappInput.disabled = true;
+      console.log("✅ WhatsApp input preenchido e desabilitado");
+    }
+
+    if (btnConfirmar) {
+      btnConfirmar.innerHTML = "💙 Presença Confirmada";
+      btnConfirmar.disabled = true;
+      btnConfirmar.style.opacity = "0.7";
+      console.log("✅ Botão confirmado desabilitado\n");
+    }
+  } else {
+    console.log("❌ Usuário NÃO confirmou ainda\n");
   }
 
-  if (whatsappConfirmacao) {
-    whatsappConfirmacao.value = whatsappSalvo;
-    whatsappConfirmacao.disabled = true;
-  }
-}
+  // ============================================
+  // CONTADOR DE CONFIRMADOS
+  // ============================================
+  console.log("📍 Inicializando contador de confirmados...");
+  let confirmados = parseInt(localStorage.getItem("confirmados") || "0");
+  console.log("Valor atual no localStorage:", confirmados);
 
-const btnPainelAdm = document.getElementById("btnPainelAdm");
-const btnAbrirAdmFooter = document.getElementById("btnAbrirAdmFooter");
-
-function abrirPainelAdm() {
-  window.location.href = "adm.html";
-}
-
-btnPainelAdm?.addEventListener("click", abrirPainelAdm);
-btnAbrirAdmFooter?.addEventListener("click", abrirPainelAdm);
-
-// FUNCAO PARA REINICIALIZAR O CONTADOR
-async function resetarContador() {
-  const confirmacaoDocId = localStorage.getItem("confirmacaoDocId");
-
-  if (confirmacaoDocId && confirmacoesCollection) {
-    try {
-      await deleteDoc(doc(confirmacoesCollection, confirmacaoDocId));
-    } catch (error) {
-      console.error("Erro ao remover confirmacao do Firestore:", error);
-    }
+  const contadorEl = el("contadorPessoas");
+  if (contadorEl) {
+    contadorEl.textContent = confirmados;
+    console.log("✅ Contador UI atualizado para:", confirmados, "\n");
   }
 
-  localStorage.removeItem("confirmados");
-  localStorage.removeItem("jaConfirmou");
-  localStorage.removeItem("nomeConfirmado");
-  localStorage.removeItem("whatsappConfirmado");
-  localStorage.removeItem("confirmacaoDocId");
-  totalConfirmados = 0;
-  isConfirmando = false;
-  if (contadorPessoas) contadorPessoas.innerHTML = "Privado";
-  if (btnConfirmar) {
-    btnConfirmar.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirmar Presenca';
-    btnConfirmar.disabled = false;
-    btnConfirmar.style.opacity = "1";
-  }
-  if (nomeConfirmacao) {
-    nomeConfirmacao.disabled = false;
-    nomeConfirmacao.value = "";
-  }
-  if (whatsappConfirmacao) {
-    whatsappConfirmacao.disabled = false;
-    whatsappConfirmacao.value = "";
-  }
-  console.log("Contador de confirmados reiniciado!");
-}
+  // ============================================
+  // BOTÃO CONFIRMAR PRESENÇA
+  // ============================================
+  console.log("📍 Configurando botão CONFIRMAR...");
+  const btnConfirmar = el("btnConfirmar");
+  const nomeInput = el("nomeConfirmacao");
+  const whatsappInput = el("whatsappConfirmacao");
 
-window.resetarContador = resetarContador;
+  if (btnConfirmar && !btnConfirmar.disabled) {
+    btnConfirmar.addEventListener("click", (e) => {
+      e.preventDefault();
+      console.log("\n🔘 === BOTÃO CONFIRMAR CLICADO ===");
 
-if (btnConfirmar) {
-  btnConfirmar.addEventListener("click", async () => {
-    if (!firebaseDisponivel || !confirmacoesCollection) {
-      mostrarToast("Confirmacao indisponivel no momento. Configure o Firebase.", "erro");
-      return;
-    }
+      const nome = (nomeInput?.value || "").trim();
+      const whatsapp = (whatsappInput?.value || "").trim();
 
-    const nome = sanitizarEntrada(nomeConfirmacao?.value || "");
-    const whatsapp = sanitizarEntrada(whatsappConfirmacao?.value || "");
+      console.log("Nome inserido:", nome);
+      console.log("WhatsApp inserido:", whatsapp);
 
-    if (!validarNome(nome)) {
-      mostrarToast("Nome deve ter entre 3 e 100 caracteres", "aviso");
-      nomeConfirmacao?.focus();
-      return;
-    }
+      // Validações
+      if (!nome || nome.length < 3) {
+        console.log("❌ Nome inválido!");
+        alert("Nome deve ter pelo menos 3 caracteres!");
+        return;
+      }
 
-    if (!validarWhatsapp(whatsapp)) {
-      mostrarToast("WhatsApp invalido. Use formato: (81) 99999-9999", "aviso");
-      whatsappConfirmacao?.focus();
-      return;
-    }
+      if (!whatsapp || whatsapp.length < 10) {
+        console.log("❌ WhatsApp inválido!");
+        alert("WhatsApp inválido! Use formato: (81) 99999-9999");
+        return;
+      }
 
-    if (!rateLimiter.permitir("confirmacao")) {
-      mostrarToast("Voce atingiu o limite de tentativas. Tente novamente em 1 hora", "erro");
-      return;
-    }
+      console.log("✅ Validações passadas!");
 
-    if (isConfirmando) {
-      mostrarToast("Aguarde a confirmacao ser processada...", "aviso");
-      return;
-    }
+      // SALVAR NO LOCALSTORAGE
+      console.log("\n📝 === SALVANDO NO LOCALSTORAGE ===");
+      
+      confirmados++;
+      localStorage.setItem("confirmados", String(confirmados));
+      console.log("✅ Salvou 'confirmados':", confirmados);
 
-    if (localStorage.getItem("jaConfirmou") === "sim") {
-      mostrarToast("Voce ja confirmou sua presenca!", "aviso");
-      return;
-    }
-
-    isConfirmando = true;
-    btnConfirmar.disabled = true;
-    const originalText = btnConfirmar.innerHTML;
-    btnConfirmar.innerHTML = "Salvando...";
-
-    try {
-      const docRef = await addDoc(confirmacoesCollection, {
-        nome,
-        whatsapp: formatarWhatsapp(whatsapp),
-        createdAt: serverTimestamp(),
-      });
-
-      totalConfirmados += 1;
-      localStorage.setItem("confirmados", totalConfirmados);
-      localStorage.setItem("confirmacaoDocId", docRef.id);
       localStorage.setItem("jaConfirmou", "sim");
+      console.log("✅ Salvou 'jaConfirmou': sim");
+
       localStorage.setItem("nomeConfirmado", nome);
+      console.log("✅ Salvou 'nomeConfirmado':", nome);
+
       localStorage.setItem("whatsappConfirmado", whatsapp);
+      console.log("✅ Salvou 'whatsappConfirmado':", whatsapp);
 
-      if (nomeConfirmacao) {
-        nomeConfirmacao.disabled = true;
+      // Verificar se foi salvo
+      console.log("\n🔍 === VERIFICANDO DADOS SALVOS ===");
+      console.log("localStorage.getItem('confirmados'):", localStorage.getItem("confirmados"));
+      console.log("localStorage.getItem('jaConfirmou'):", localStorage.getItem("jaConfirmou"));
+      console.log("localStorage.getItem('nomeConfirmado'):", localStorage.getItem("nomeConfirmado"));
+      console.log("localStorage.getItem('whatsappConfirmado'):", localStorage.getItem("whatsappConfirmado"));
+
+      // Atualizar UI
+      console.log("\n🎨 === ATUALIZANDO UI ===");
+      if (contadorEl) {
+        contadorEl.textContent = confirmados;
+        contadorEl.classList.add("pulse");
+        setTimeout(() => contadorEl.classList.remove("pulse"), 500);
+        console.log("✅ Contador UI atualizado para:", confirmados);
       }
-      if (whatsappConfirmacao) {
-        whatsappConfirmacao.disabled = true;
+
+      if (nomeInput) {
+        nomeInput.disabled = true;
+        console.log("✅ Nome input desabilitado");
       }
 
-      if (contadorPessoas) {
-        contadorPessoas.innerHTML = String(totalConfirmados);
-        contadorPessoas.classList.add("pulse");
-        setTimeout(() => {
-          contadorPessoas.classList.remove("pulse");
-        }, 500);
+      if (whatsappInput) {
+        whatsappInput.disabled = true;
+        console.log("✅ WhatsApp input desabilitado");
       }
 
-      btnConfirmar.innerHTML = "Presenca Confirmada";
-      btnConfirmar.style.opacity = ".7";
+      btnConfirmar.innerHTML = "💙 Presença Confirmada!";
+      btnConfirmar.disabled = true;
+      btnConfirmar.style.opacity = "0.7";
+      console.log("✅ Botão desabilitado\n");
 
-      mostrarToast("Presenca confirmada com sucesso!", "sucesso");
-    } catch (error) {
-      console.error("Erro ao confirmar presenca:", error);
-      mostrarToast("Erro ao confirmar presenca. Tente novamente.", "erro");
-      btnConfirmar.disabled = false;
-      btnConfirmar.innerHTML = originalText;
-    } finally {
-      isConfirmando = false;
-    }
-  });
-}
+      alert("✅ Presença confirmada com sucesso!\nNome: " + nome + "\nWhatsApp: " + whatsapp);
+      console.log("✅ === CONFIRMAÇÃO COMPLETA ===\n");
+    });
 
-// MODAL PRESENTES
-const abrirPresentes = document.getElementById("abrirPresentes");
-const modalPresentes = document.getElementById("modalPresentes");
-const fecharModal = document.getElementById("fecharModal");
+    console.log("✅ Event listener do botão CONFIRMAR adicionado\n");
+  } else {
+    console.log("❌ Botão CONFIRMAR não encontrado ou já desabilitado\n");
+  }
 
-if (abrirPresentes) {
-  abrirPresentes.addEventListener("click", () => {
-    if (modalPresentes) {
+  // ============================================
+  // PAINEL ADMINISTRATIVO
+  // ============================================
+  console.log("📍 Configurando PAINEL ADMINISTRATIVO...");
+  const btnAdmin = el("btnAbrirAdmFooter");
+  const senhaModal = el("modalSenhaAdmin");
+  const inputSenha = el("inputSenhaAdmin");
+  const btnConfirmSenha = el("btnConfirmarSenhaAdmin");
+  const btnCancelSenha = el("btnCancelarSenhaAdmin");
+  const tentativas = el("tentativasRestantes");
+
+  if (btnAdmin) {
+    btnAdmin.addEventListener("click", () => {
+      console.log("\n🔐 === BOTÃO PAINEL ADMIN CLICADO ===");
+      if (senhaModal) {
+        senhaModal.style.display = "flex";
+        console.log("✅ Modal aberta (display: flex)");
+        if (inputSenha) {
+          inputSenha.focus();
+          console.log("✅ Input senha focado\n");
+        }
+        if (tentativas) {
+          tentativas.textContent = "Tentativas: 3";
+          console.log("✅ Tentativas resetadas para 3");
+        }
+      }
+    });
+    console.log("✅ Event listener do botão ADMIN adicionado\n");
+  }
+
+  if (btnConfirmSenha) {
+    let tries = 3;
+    btnConfirmSenha.addEventListener("click", () => {
+      const senha = (inputSenha?.value || "").trim();
+      console.log("🔑 Validando senha inserida:", senha);
+
+      if (senha === "Cf182026") {
+        console.log("✅ SENHA CORRETA!");
+        alert("✅ Acesso concedido!");
+        sessionStorage.setItem("adminAutenticado", "sim");
+        window.location.href = "adm.html";
+      } else {
+        tries--;
+        console.log("❌ Senha incorreta! Tentativas restantes:", tries);
+        
+        if (tries > 0) {
+          alert(`❌ Senha incorreta!\n${tries} tentativa${tries !== 1 ? "s" : ""} restante${tries !== 1 ? "s" : ""}`);
+          if (inputSenha) inputSenha.value = "";
+          if (tentativas) tentativas.textContent = `Tentativas: ${tries}`;
+          if (inputSenha) inputSenha.focus();
+        } else {
+          console.log("❌ TENTATIVAS ESGOTADAS!");
+          alert("❌ Acesso negado! Tentativas esgotadas.");
+          if (senhaModal) senhaModal.style.display = "none";
+        }
+      }
+    });
+    console.log("✅ Event listener de confirmação de senha adicionado\n");
+  }
+
+  if (btnCancelSenha) {
+    btnCancelSenha.addEventListener("click", () => {
+      console.log("❌ Admin cancelado pelo usuário");
+      if (senhaModal) senhaModal.style.display = "none";
+    });
+  }
+
+  // ============================================
+  // MODAL PRESENTES
+  // ============================================
+  console.log("📍 Configurando MODAL PRESENTES...");
+  const btnPresentes = el("abrirPresentes");
+  const modalPresentes = el("modalPresentes");
+  const btnFechar = el("fecharModal");
+
+  if (btnPresentes && modalPresentes) {
+    btnPresentes.addEventListener("click", () => {
+      console.log("🎁 Abrindo modal presentes");
       modalPresentes.classList.add("ativo");
-    }
-  });
-}
+    });
+  }
 
-if (fecharModal) {
-  fecharModal.addEventListener("click", () => {
-    if (modalPresentes) {
+  if (btnFechar && modalPresentes) {
+    btnFechar.addEventListener("click", () => {
+      console.log("❌ Fechando modal presentes");
       modalPresentes.classList.remove("ativo");
-    }
-  });
-}
+    });
+  }
 
-// FECHAR CLICANDO FORA
-if (modalPresentes) {
-  modalPresentes.addEventListener("click", (e) => {
-    if (e.target === modalPresentes) {
-      modalPresentes.classList.remove("ativo");
-    }
-  });
-}
+  if (modalPresentes) {
+    modalPresentes.addEventListener("click", (e) => {
+      if (e.target === modalPresentes) {
+        console.log("❌ Modal presentes fechada (clique fora)");
+        modalPresentes.classList.remove("ativo");
+      }
+    });
+  }
 
-// Dark Mode Toggle
-const darkModeButton = document.getElementById("darkModeToggle");
-if (darkModeButton) {
-  darkModeButton.addEventListener("click", () => {
-    darkMode.toggle();
-    darkModeButton.innerHTML = darkMode.isDark() ? "Light" : "Dark";
-  });
-  darkModeButton.innerHTML = darkMode.isDark() ? "Light" : "Dark";
-}
+  console.log("✅ Modal presentes configurada\n");
+
+  // ============================================
+  // DARK MODE
+  // ============================================
+  console.log("📍 Configurando DARK MODE...");
+  const darkToggle = el("darkModeToggle");
+  if (darkToggle) {
+    darkToggle.addEventListener("click", () => {
+      const html = document.documentElement;
+      const isDark = html.getAttribute("data-theme") === "dark";
+      html.setAttribute("data-theme", isDark ? "light" : "dark");
+      localStorage.setItem("darkMode", String(!isDark));
+      darkToggle.textContent = isDark ? "🌙" : "☀️";
+      console.log("🌙 Dark mode toggled para:", isDark ? "light" : "dark");
+    });
+    console.log("✅ Dark mode configurado\n");
+  }
+
+  // ============================================
+  // FINAL
+  // ============================================
+  console.log("=" .repeat(50));
+  console.log("🎉 === APLICAÇÃO TOTALMENTE CARREGADA ===");
+  console.log("=" .repeat(50));
+  console.log("\n💡 DICAS PARA TESTES:");
+  console.log("1. Preencha NOME e WHATSAPP");
+  console.log("2. Clique 'CONFIRMAR PRESENÇA'");
+  console.log("3. Recarregue a página (F5)");
+  console.log("4. Os dados devem estar preenchidos e o botão desabilitado");
+  console.log("5. Abra DevTools → Application → Storage → localStorage");
+  console.log("6. Você verá: confirmados, jaConfirmou, nomeConfirmado, whatsappConfirmado\n");
+});

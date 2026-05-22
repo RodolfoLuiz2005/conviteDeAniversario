@@ -1,31 +1,47 @@
-// Import the functions you need from Firebase CDN modules
+/* eslint-disable no-console */
+/* eslint-disable no-undef */
+// Import Firebase CDN modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import {
+  getFirestore,
+  enableIndexedDbPersistence,
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
-// Load Firebase configuration from window object (injected via HTML)
+// Firebase config injected from HTML
 const firebaseConfig = window.firebaseConfig;
+
+// Validate config
 const firebaseConfigInvalido =
-  !firebaseConfig?.apiKey ||
-  !firebaseConfig?.projectId ||
+  !firebaseConfig ||
+  !firebaseConfig.apiKey ||
+  !firebaseConfig.projectId ||
   Object.values(firebaseConfig).some(
-    (value) => typeof value === "string" && value.includes("__")
+    (value) => typeof value === "string" && (value.includes("__") || value.trim() === "")
   );
 
-let auth = null;
+let app = null;
 let db = null;
 
-if (firebaseConfigInvalido) {
-  console.warn("Firebase config ausente ou nao injetado.");
-} else {
-  // Initialize Firebase only when config is valid.
-  const app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
+// Initialize Firebase
+try {
+  if (firebaseConfigInvalido) {
+    console.warn("Firebase config ausente ou inválido.");
+  } else {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+
+    // Optional offline persistence
+    enableIndexedDbPersistence(db).catch((err) => {
+      console.warn("Persistência offline não ativada:", err.code);
+    });
+
+    console.log("Firebase iniciado com sucesso.");
+  }
+} catch (error) {
+  console.error("Erro ao iniciar Firebase:", error);
 }
 
+// Check if Firebase is ready
 export function isFirebaseReady() {
-  return !firebaseConfigInvalido && Boolean(auth) && Boolean(db);
+  return Boolean(app && db);
 }
-
-export { auth, db };

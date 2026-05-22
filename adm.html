@@ -1,182 +1,227 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Painel administrativo para gerenciar a festa de aniversario" />
+    <meta
+      name="description"
+      content="Painel administrativo para gerenciar a festa de aniversário"
+    />
     <title>Painel Administrativo - Festa</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="admstyle.css">
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
 
+    <!-- Bootstrap Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+
+    <link rel="stylesheet" href="admstyle.css" />
+
+    <!-- Firebase Configuration from Environment -->
     <script>
       window.firebaseConfig = {
-        apiKey: "__FIREBASE_API_KEY__",
-        authDomain: "__FIREBASE_AUTH_DOMAIN__",
-        projectId: "__FIREBASE_PROJECT_ID__",
-        storageBucket: "__FIREBASE_STORAGE_BUCKET__",
-        messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
-        appId: "__FIREBASE_APP_ID__",
-        measurementId: "__FIREBASE_MEASUREMENT_ID__"
+        apiKey: "sua_chave_firebase_aqui",
+        authDomain: "seu_projeto.firebaseapp.com",
+        projectId: "seu_projeto_id",
+        storageBucket: "seu_projeto.firebasestorage.app",
+        messagingSenderId: "seu_id_mensageiro",
+        appId: "seu_app_id",
+        measurementId: "seu_measurement_id",
       };
+
+      // Admin Password - will be injected by Docker
+      window.adminPassword = "Cf182026";
 
       window.adminAuthConfig = {
-        password: "Cf182026"
+        password: "Cf182026",
       };
     </script>
-</head>
+  </head>
 
-<body>
+  <body>
+    <div class="container">
+      <!-- HEADER -->
+      <header style="display: flex; justify-content: space-between; align-items: flex-start">
+        <div>
+          <h1>
+            <i class="bi bi-calendar-check"></i>
+            Painel Administrativo da Festa
+          </h1>
+          <p>Gerencie os convidados e confirmações da festa de Brenda Almeida</p>
+        </div>
+        <a
+          href="index.html"
+          style="
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border-radius: 10px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: 0.3s;
+            white-space: nowrap;
+            height: fit-content;
+          "
+          onmouseover="
+            this.style.background = '#5568d3';
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 5px 15px rgba(102, 126, 234, 0.4)';
+          "
+          onmouseout="
+            this.style.background = '#667eea';
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+          "
+        >
+          <i class="bi bi-arrow-left"></i>
+          Voltar
+        </a>
+      </header>
 
-    <div id="adminApp" class="container" hidden>
-
-        <header style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-                <h1>
-                    <i class="bi bi-calendar-check"></i>
-                    Painel Administrativo da Festa
-                </h1>
-                <p>Gerencie os convidados e confirmacoes da festa de Brenda Almeida</p>
-            </div>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <button id="btnLogout" type="button" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;">
-                    <i class="bi bi-box-arrow-right"></i>
-                    Sair
-                </button>
-                <a href="index.html" style="padding: 10px 20px; background: #667eea; color: white; border-radius: 10px; text-decoration: none; display: flex; align-items: center; gap: 8px; font-weight: 600; transition: 0.3s; white-space: nowrap; height: fit-content;" onmouseover="this.style.background='#5568d3'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.background='#667eea'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                    <i class="bi bi-arrow-left"></i>
-                    Voltar
-                </a>
-            </div>
-        </header>
-
-        <div class="dashboard">
-            <div class="card-stat">
-                <i class="bi bi-people-fill"></i>
-                <div class="numero" id="totalConvidados">0</div>
-                <div class="label">Total de Convidados</div>
-            </div>
-
-            <div class="card-stat">
-                <i class="bi bi-check-circle-fill"></i>
-                <div class="numero" id="totalConfirmados">0</div>
-                <div class="label">Confirmados</div>
-            </div>
-
-            <div class="card-stat">
-                <i class="bi bi-clock-fill"></i>
-                <div class="numero" id="totalPendentes">0</div>
-                <div class="label">Pendentes</div>
-            </div>
-
-            <div class="card-stat">
-                <i class="bi bi-percent"></i>
-                <div class="numero" id="percentualConfirmacao">0%</div>
-                <div class="label">Taxa de Confirmacao</div>
-            </div>
+      <!-- DASHBOARD ESTATÍSTICAS -->
+      <div class="dashboard">
+        <div class="card-stat">
+          <i class="bi bi-people-fill"></i>
+          <div class="numero" id="totalConvidados">0</div>
+          <div class="label">Total de Convidados</div>
         </div>
 
-        <div class="section">
-            <h2>
-                <i class="bi bi-chat-dots-fill"></i>
-                Ultima Confirmacao do Convite
-            </h2>
-            <div id="ultimaConfirmacao" class="confirmacao-principal">
-                <p id="ultConfirmacaoStatus">Carregando informacoes de confirmacao...</p>
-                <p id="ultConfirmNome"></p>
-                <p id="ultConfirmWhatsapp"></p>
-                <div class="botoes" style="margin-top: 16px; gap: 12px; display: flex; flex-wrap: wrap;">
-                    <button class="btn btn-warning btn-pequeno" onclick="limparConfirmacaoPrincipal()">
-                        <i class="bi bi-trash"></i>
-                        Remover Ultima Confirmacao
-                    </button>
-                    <button class="btn btn-secondary btn-pequeno" onclick="carregarConfirmacaoPrincipal()">
-                        <i class="bi bi-arrow-clockwise"></i>
-                        Atualizar Status
-                    </button>
-                </div>
-            </div>
+        <div class="card-stat">
+          <i class="bi bi-check-circle-fill"></i>
+          <div class="numero" id="totalConfirmados">0</div>
+          <div class="label">Confirmados</div>
         </div>
 
-        <div class="section">
-            <h2>
-                <i class="bi bi-person-plus"></i>
-                Adicionar Novo Convidado
-            </h2>
-
-            <div class="mensagem" id="mensagem"></div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="nomeConvidado">Nome do Convidado</label>
-                    <input type="text" id="nomeConvidado" placeholder="Ex: Joao Silva">
-                </div>
-
-                <div class="form-group">
-                    <label for="telefonConvidado">WhatsApp</label>
-                    <input type="tel" id="telefonConvidado" placeholder="Ex: 81 9 9999-9999">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="statusConvidado">Status</label>
-                    <select id="statusConvidado">
-                        <option value="pendente">Pendente de Confirmacao</option>
-                        <option value="confirmado">Confirmado</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="notasConvidado">Observacoes</label>
-                    <input type="text" id="notasConvidado" placeholder="Ex: Alergias, acompanhantes...">
-                </div>
-            </div>
-
-            <div class="botoes">
-                <button class="btn btn-primary" onclick="adicionarConvidado()">
-                    <i class="bi bi-plus-circle"></i>
-                    Adicionar Convidado
-                </button>
-            </div>
+        <div class="card-stat">
+          <i class="bi bi-clock-fill"></i>
+          <div class="numero" id="totalPendentes">0</div>
+          <div class="label">Pendentes</div>
         </div>
 
-        <div class="section">
-            <h2>
-                <i class="bi bi-list-check"></i>
-                Lista de Convidados
-            </h2>
+        <div class="card-stat">
+          <i class="bi bi-percent"></i>
+          <div class="numero" id="percentualConfirmacao">0%</div>
+          <div class="label">Taxa de Confirmação</div>
+        </div>
+      </div>
 
-            <div class="botoes" style="margin-bottom: 20px;">
-                <input type="text" id="filtro" placeholder="Buscar convidado..." style="margin: 0; flex: 1;">
-                <button class="btn btn-info btn-pequeno" onclick="exportarDados()" title="Exportar dados como CSV">
-                    <i class="bi bi-download"></i>
-                    Exportar CSV
-                </button>
-                <button class="btn btn-warning btn-pequeno" onclick="resetarContadoresFesta()">
-                    <i class="bi bi-arrow-clockwise"></i>
-                    Resetar
-                </button>
-                <button class="btn btn-danger btn-pequeno" onclick="limparTodosDados()">
-                    <i class="bi bi-trash"></i>
-                    Limpar Tudo
-                </button>
-            </div>
+      <!-- SEÇÃO ÚLTIMA CONFIRMAÇÃO PRINCIPAL -->
+      <div class="section">
+        <h2>
+          <i class="bi bi-chat-dots-fill"></i>
+          Última Confirmação do Convite
+        </h2>
+        <div id="ultimaConfirmacao" class="confirmacao-principal">
+          <p id="ultConfirmacaoStatus">Carregando informações de confirmação...</p>
+          <p id="ultConfirmNome"></p>
+          <p id="ultConfirmWhatsapp"></p>
+          <div class="botoes" style="margin-top: 16px; gap: 12px; display: flex; flex-wrap: wrap">
+            <button class="btn btn-warning btn-pequeno" onclick="limparConfirmacaoPrincipal()">
+              <i class="bi bi-trash"></i>
+              Remover Última Confirmação
+            </button>
+            <button class="btn btn-secondary btn-pequeno" onclick="carregarConfirmacaoPrincipal()">
+              <i class="bi bi-arrow-clockwise"></i>
+              Atualizar Status
+            </button>
+          </div>
+        </div>
+      </div>
 
-            <div id="listaConvidados" class="lista-convidados">
-                <div class="vazio">
-                    <i class="bi bi-inbox"></i>
-                    <p>Nenhum convidado adicionado ainda</p>
-                </div>
-            </div>
+      <!-- SEÇÃO ADICIONAR CONVIDADO -->
+      <div class="section">
+        <h2>
+          <i class="bi bi-person-plus"></i>
+          Adicionar Novo Convidado
+        </h2>
+
+        <div class="mensagem" id="mensagem"></div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nomeConvidado">Nome do Convidado</label>
+            <input type="text" id="nomeConvidado" placeholder="Ex: João Silva" />
+          </div>
+
+          <div class="form-group">
+            <label for="telefonConvidado">WhatsApp</label>
+            <input type="tel" id="telefonConvidado" placeholder="Ex: 81 9 9999-9999" />
+          </div>
         </div>
 
+        <div class="form-row">
+          <div class="form-group">
+            <label for="statusConvidado">Status</label>
+            <select id="statusConvidado">
+              <option value="pendente">Pendente de Confirmação</option>
+              <option value="confirmado">Confirmado</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="notasConvidado">Observações</label>
+            <input type="text" id="notasConvidado" placeholder="Ex: Alergias, acompanhantes..." />
+          </div>
+        </div>
+
+        <div class="botoes">
+          <button class="btn btn-primary" onclick="adicionarConvidado()">
+            <i class="bi bi-plus-circle"></i>
+            Adicionar Convidado
+          </button>
+        </div>
+      </div>
+
+      <!-- SEÇÃO LISTA DE CONVIDADOS -->
+      <div class="section">
+        <h2>
+          <i class="bi bi-list-check"></i>
+          Lista de Convidados
+        </h2>
+
+        <div class="botoes" style="margin-bottom: 20px">
+          <input
+            type="text"
+            id="filtro"
+            placeholder="Buscar convidado..."
+            style="margin: 0; flex: 1"
+          />
+          <button
+            class="btn btn-info btn-pequeno"
+            onclick="exportarDados()"
+            title="Exportar dados como CSV"
+          >
+            <i class="bi bi-download"></i>
+            Exportar CSV
+          </button>
+          <button class="btn btn-warning btn-pequeno" onclick="resetarContadoresFesta()">
+            <i class="bi bi-arrow-clockwise"></i>
+            Resetar
+          </button>
+          <button class="btn btn-danger btn-pequeno" onclick="limparTodosDados()">
+            <i class="bi bi-trash"></i>
+            Limpar Tudo
+          </button>
+        </div>
+
+        <div id="listaConvidados" class="lista-convidados">
+          <div class="vazio">
+            <i class="bi bi-inbox"></i>
+            <p>Nenhum convidado adicionado ainda</p>
+          </div>
+        </div>
+      </div>
     </div>
 
-    
-
-</body>
-<script type="module" src="adm.js"></script>
+  </body>
+    <script src="adm.js"></script>
 </html>

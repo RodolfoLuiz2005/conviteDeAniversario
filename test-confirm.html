@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Confirmação</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        input { padding: 10px; margin: 10px 0; width: 100%; }
+        button { padding: 10px 20px; background: blue; color: white; cursor: pointer; }
+        #result { margin-top: 20px; padding: 20px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>Teste de Confirmação Local</h1>
+    
+    <input type="text" id="nome" placeholder="Nome" value="Teste Direto">
+    <input type="text" id="whatsapp" placeholder="WhatsApp" value="(11) 98765-4321">
+    <button onclick="testarConfirmacao()">Confirmar</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        function testarConfirmacao() {
+            console.log("=== TESTE DE CONFIRMAÇÃO ===");
+            const resultDiv = document.getElementById("result");
+            
+            try {
+                const nome = document.getElementById("nome").value;
+                const whatsapp = document.getElementById("whatsapp").value;
+                
+                console.log("1. Nome:", nome);
+                console.log("2. WhatsApp:", whatsapp);
+                
+                // Simular a função salvarConvidadoLocalmente
+                let convidados = JSON.parse(localStorage.getItem("convidados_local") || "[]");
+                const novoConvidado = {
+                    id: Date.now().toString(),
+                    nome,
+                    whatsapp,
+                    confirmado: true,
+                    dataAdicao: new Date().toLocaleDateString("pt-BR"),
+                    hora: new Date().toLocaleTimeString("pt-BR"),
+                    sincronizado: false,
+                };
+                convidados.push(novoConvidado);
+                localStorage.setItem("convidados_local", JSON.stringify(convidados));
+                
+                localStorage.setItem("jaConfirmou", "sim");
+                localStorage.setItem("nomeConfirmado", nome);
+                
+                console.log("3. Convidado salvo");
+                
+                resultDiv.innerHTML = `
+                    <h2>✅ Sucesso!</h2>
+                    <p>Nome: ${nome}</p>
+                    <p>WhatsApp: ${whatsapp}</p>
+                    <p>Total confirmados: ${convidados.length}</p>
+                    <pre>${JSON.stringify(localStorage.getItem("convidados_local"), null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error("❌ Erro:", error);
+                resultDiv.innerHTML = `<h2>❌ Erro</h2><p>${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

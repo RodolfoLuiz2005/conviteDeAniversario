@@ -1,234 +1,137 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Convite de aniversário da Brenda - confirme sua presença agora!" />
-    <meta name="theme-color" content="#667eea" />
-
-    <title>Convite de Aniversário - Brenda</title>
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Firebase Configuration from Environment -->
-    <script>
-      window.firebaseConfig = {
-        apiKey: "__FIREBASE_API_KEY__",
-        authDomain: "__FIREBASE_AUTH_DOMAIN__",
-        projectId: "__FIREBASE_PROJECT_ID__",
-        storageBucket: "__FIREBASE_STORAGE_BUCKET__",
-        messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
-        appId: "__FIREBASE_APP_ID__",
-        measurementId: "__FIREBASE_MEASUREMENT_ID__"
-      };
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convite de Aniversário - Brenda</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  
+  <script>
+    window.firebaseConfig = {
+      apiKey: "sua_chave_firebase_aqui",
+      authDomain: "seu_projeto.firebaseapp.com",
+      projectId: "seu_projeto_id",
+      storageBucket: "seu_projeto.firebasestorage.app",
+      messagingSenderId: "seu_id_mensageiro",
+      appId: "seu_app_id",
+      measurementId: "seu_measurement_id"
+    };
+    window.adminPassword = "Cf182026";
+  </script>
 </head>
 
 <body>
+  <button id="darkModeToggle" class="dark-mode-toggle">🌙</button>
 
-    <!-- Dark Mode Toggle -->
-    <button id="darkModeToggle" class="dark-mode-toggle">🌙</button>
+  <section class="hero">
+    <div class="card">
+      <div class="mini-tag">✨ Você é nosso convidado especial</div>
+      <h1>Brenda Almeida</h1>
+      <p class="subtitle">🎉 Convidamos você para celebrar o aniversário de 15 anos da Brenda! 🎉</p>
+      <p class="subtitle">Terá início às 12:00h - 18:00 do dia 19 de Setembro, em Olinda - PE. Venha comemorar conosco esse momento tão especial! 💙</p>
 
-    <!-- HERO -->
-    <section class="hero">
-        <div class="card">
-            <div class="mini-tag">
-                ✨ Você é nosso convidado especial
-            </div>
-
-            <h1>Brenda Almeida</h1>
-
-            <p class="subtitle">
-                🎉 Convidamos você para celebrar o aniversário de 15 anos da Brenda! 🎉
-            </p>
-            <p class="subtitle">
-                Terá início às 12:00h - 18:00 do dia 19 de Setembro, em Olinda - PE. Venha comemorar conosco esse momento tão especial! 💙
-            </p>
-
-            <!-- INFORMAÇÕES -->
-            <div class="infos">
-                <div class="info">
-                    <i class="bi bi-calendar-heart"></i>
-                    <p>19 Setembro</p>
-                </div>
-
-                <div class="info">
-                    <i class="bi bi-clock-history"></i>
-                    <p>13:00h</p>
-                </div>
-
-                <div class="info">
-                    <i class="bi bi-geo-alt-fill"></i>
-                    <p>Olinda - PE</p>
-                </div>
-            </div>
-
-            <!-- CONTADOR -->
-            <div class="contador">
-                <h2>Faltam apenas:</h2>
-
-                <div class="tempo">
-                    <div>
-                        <span id="dias">00</span>
-                        Dias
-                    </div>
-
-                    <div>
-                        <span id="horas">00</span>
-                        Horas
-                    </div>
-
-                    <div>
-                        <span id="minutos">00</span>
-                        Min
-                    </div>
-
-                    <div>
-                        <span id="segundos">00</span>
-                        Seg
-                    </div>
-                </div>
-            </div>
-
-            <!-- BOTÕES -->
-            <div class="buttons">
-                <a href="https://www.google.com/maps/place/ESPA%C3%87O+CONQUISTA/@-7.9791244,-34.8941401,17z/data=!3m1!4b1!4m6!3m5!1s0x7ab173f8a0d9ab1:0xa498c8e572484948!8m2!3d-7.9791244!4d-34.8941401!16s%2Fg%2F11vlt06x_4?entry=ttu&g_ep=EgoyMDI2MDUxMy4wIKXMDSoASAFQAw%3D%3D"
-                    target="_blank"
-                    class="btn btn-local"
-                    aria-label="Ver localização no mapa">
-                    <i class="bi bi-geo-alt-fill"></i>
-                    Ver Local da Festa
-                </a>
-
-                <div class="confirm-info">
-                    <input type="text" id="nomeConfirmacao" placeholder="Nome completo" 
-                           aria-label="Nome"
-                           style="width:100%;margin-bottom:10px;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;outline:none;">
-                    
-                    <input type="tel" id="whatsappConfirmacao" placeholder="WhatsApp (81) 99999-9999"
-                           aria-label="Número do WhatsApp"
-                           style="width:100%;margin-bottom:10px;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;outline:none;">
-                </div>
-
-                <button class="btn btn-confirmar" id="btnConfirmar" aria-label="Confirmar presença">
-                    <i class="bi bi-check-circle-fill"></i>
-                    Confirmar Presença
-                </button>
-
-                <button class="btn btn-presente" id="abrirPresentes" aria-label="Ver lista de presentes">
-                    <i class="bi bi-gift-fill"></i>
-                    Lista de Presentes
-                </button>
-
-                <a href="https://wa.me/5581996801867"
-                    target="_blank"
-                    class="btn btn-whats"
-                    aria-label="Conversar no WhatsApp">
-                    <i class="bi bi-whatsapp"></i>
-                    Falar no WhatsApp
-                </a>
-            </div>
-
-            <!-- CONFIRMADOS -->
-            <div class="confirmados-box">
-                <h3>✨ Pessoas Confirmadas ✨</h3>
-
-                <div class="numero-confirmados" id="contadorPessoas">
-                    0
-                </div>
-
-                <p>
-                    convidados já confirmaram presença 💙
-                </p>
-            </div>
+      <div class="infos">
+        <div class="info">
+          <i class="bi bi-calendar-heart"></i>
+          <p>19 Setembro</p>
         </div>
-    </section>
-
-    <!-- GALERIA -->
-    <section class="galeria">
-        <h2>Momentos Especiais ✨</h2>
-
-        <div class="grid">
-            <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1200&auto=format&fit=crop" alt="Momento especial 1">
-            <img src="https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=1200&auto=format&fit=crop" alt="Momento especial 2">
-            <img src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?q=80&w=1200&auto=format&fit=crop" alt="Momento especial 3">
-            <img src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1200&auto=format&fit=crop" alt="Momento especial 4">
+        <div class="info">
+          <i class="bi bi-clock-history"></i>
+          <p>13:00h</p>
         </div>
-    </section>
-
-    <!-- MODAL PRESENTES -->
-    <div class="modal-presentes" id="modalPresentes">
-        <div class="modal-box">
-            <button class="fechar-modal" id="fecharModal" aria-label="Fechar modal">
-                <i class="bi bi-x-lg"></i>
-            </button>
-
-            <h2>🎁 Lista de Presentes</h2>
-
-            <p class="modal-texto">
-                Esses são alguns presentes desejados 💙
-            </p>
-
-            <div class="lista-presentes">
-                <div class="presente-item">
-                    <i class="bi bi-phone"></i>
-                    Fone Bluetooth
-                </div>
-
-                <div class="presente-item">
-                    <i class="bi bi-stars"></i>
-                    Kit de Maquiagem
-                </div>
-
-                <div class="presente-item">
-                    <i class="bi bi-bag-heart"></i>
-                    Bolsa Feminina
-                </div>
-
-                <div class="presente-item">
-                    <i class="bi bi-watch"></i>
-                    Smartwatch
-                </div>
-
-                <div class="presente-item">
-                    <i class="bi bi-flower1"></i>
-                    Perfume
-                </div>
-
-                <div class="presente-item">
-                    <i class="bi bi-gem"></i>
-                    Acessórios
-                </div>
-            </div>
+        <div class="info">
+          <i class="bi bi-geo-alt-fill"></i>
+          <p>Olinda - PE</p>
         </div>
-    </div>
+      </div>
 
-    <!-- FOOTER -->
-    <footer>
-        💙 Esperamos você para celebrar esse momento especial 💙
-        <br><br>
-        <button id="btnAbrirAdmFooter" style="background:none;border:none;color:#d8e8ff;text-decoration:underline;cursor:pointer;font-size:0.8rem;opacity:0.7;padding:0;">
-            Painel Administrativo
+      <div class="contador">
+        <h2>Faltam apenas:</h2>
+        <div class="tempo">
+          <div><span id="dias">00</span> Dias</div>
+          <div><span id="horas">00</span> Horas</div>
+          <div><span id="minutos">00</span> Min</div>
+          <div><span id="segundos">00</span> Seg</div>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <a href="https://www.google.com/maps/place/ESPA%C3%87O+CONQUISTA/@-7.9791244,-34.8941401,17z" target="_blank" class="btn btn-local">
+          <i class="bi bi-geo-alt-fill"></i> Ver Local da Festa
+        </a>
+
+        <input type="text" id="nomeConfirmacao" placeholder="Nome completo" style="width:100%;margin-bottom:10px;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;outline:none;" />
+        <input type="tel" id="whatsappConfirmacao" placeholder="WhatsApp (81) 99999-9999" style="width:100%;margin-bottom:10px;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;outline:none;" />
+
+        <button class="btn btn-confirmar" id="btnConfirmar">
+          <i class="bi bi-check-circle-fill"></i> Confirmar Presença
         </button>
-    </footer>
 
-   
+        <button class="btn btn-presente" id="abrirPresentes">
+          <i class="bi bi-gift-fill"></i> Lista de Presentes
+        </button>
 
+        <a href="https://wa.me/5581996801867" target="_blank" class="btn btn-whats">
+          <i class="bi bi-whatsapp"></i> Falar no WhatsApp
+        </a>
+      </div>
+
+      <div class="confirmados-box">
+        <h3>✨ Pessoas Confirmadas ✨</h3>
+        <div class="numero-confirmados" id="contadorPessoas">0</div>
+        <p>convidados já confirmaram presença 💙</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="galeria">
+    <h2>Momentos Especiais ✨</h2>
+    <div class="grid">
+      <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1200&auto=format&fit=crop" alt="Momento especial 1" />
+      <img src="https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=1200&auto=format&fit=crop" alt="Momento especial 2" />
+      <img src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?q=80&w=1200&auto=format&fit=crop" alt="Momento especial 3" />
+      <img src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1200&auto=format&fit=crop" alt="Momento especial 4" />
+    </div>
+  </section>
+
+  <div class="modal-presentes" id="modalPresentes">
+    <div class="modal-box">
+      <button class="fechar-modal" id="fecharModal"><i class="bi bi-x-lg"></i></button>
+      <h2>🎁 Lista de Presentes</h2>
+      <p class="modal-texto">Esses são alguns presentes desejados 💙</p>
+      <div class="lista-presentes">
+        <div class="presente-item"><i class="bi bi-phone"></i> Fone Bluetooth</div>
+        <div class="presente-item"><i class="bi bi-stars"></i> Kit de Maquiagem</div>
+        <div class="presente-item"><i class="bi bi-bag-heart"></i> Bolsa Feminina</div>
+        <div class="presente-item"><i class="bi bi-watch"></i> Smartwatch</div>
+        <div class="presente-item"><i class="bi bi-flower1"></i> Perfume</div>
+        <div class="presente-item"><i class="bi bi-gem"></i> Acessórios</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-senha-admin" id="modalSenhaAdmin" style="display:none;">
+    <div class="modal-box">
+      <h2>🔐 Painel Administrativo</h2>
+      <p class="modal-texto">Digite a senha para acessar</p>
+      <div id="tentativasRestantes" style="text-align:center;color:#ff6b6b;margin-bottom:15px;font-size:0.9rem;"></div>
+      <input type="password" id="inputSenhaAdmin" placeholder="Senha" style="width:100%;padding:12px;margin-bottom:15px;border:2px solid #4f8fff;border-radius:8px;background:#0a0e27;color:#fff;font-size:1rem;box-sizing:border-box;" />
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button id="btnConfirmarSenhaAdmin" style="padding:12px 25px;background:#4CAF50;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Confirmar</button>
+        <button id="btnCancelarSenhaAdmin" style="padding:12px 25px;background:#f44336;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    💙 Esperamos você para celebrar esse momento especial 💙<br /><br />
+    <button id="btnAbrirAdmFooter" style="background:none;border:none;color:#d8e8ff;text-decoration:underline;cursor:pointer;font-size:0.8rem;opacity:0.7;padding:0;">
+      Painel Administrativo
+    </button>
+  </footer>
+
+  <script type="module" src="script.js"></script>
 </body>
-<script type="module" src="script.js">
-    
-      // Configurações de autenticação para o painel administrativo
-      window.adminAuthConfig = {
-        password: "Cf182026"
-    }
-
-</script>
-
 </html>
