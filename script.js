@@ -1,3 +1,11 @@
+import { db } from "./firebase.js";
+
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
 /* eslint-disable no-console */
 console.log("=== SCRIPT.JS INICIANDO ===");
 
@@ -104,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const whatsappInput = el("whatsappConfirmacao");
 
   if (btnConfirmar && !btnConfirmar.disabled) {
-    btnConfirmar.addEventListener("click", (e) => {
+    btnConfirmar.addEventListener("click", async (e) => {
       e.preventDefault();
       console.log("\n🔘 === BOTÃO CONFIRMAR CLICADO ===");
 
@@ -132,6 +140,19 @@ document.addEventListener("DOMContentLoaded", () => {
       // SALVAR NO LOCALSTORAGE
       console.log("\n📝 === SALVANDO NO LOCALSTORAGE ===");
       
+      console.log("\n🔥 === SALVANDO NO FIRESTORE ===");
+
+      await addDoc(collection(db, "convidados"), {
+        nome,
+        whatsapp,
+        confirmado: true,
+        dataAdicao: new Date().toLocaleDateString("pt-BR"),
+        hora: new Date().toLocaleTimeString("pt-BR"),
+        createdAt: serverTimestamp(),
+      });
+
+      console.log("✅ Convidado salvo no Firestore");
+
       confirmados++;
       localStorage.setItem("confirmados", String(confirmados));
       console.log("✅ Salvou 'confirmados':", confirmados);
