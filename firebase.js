@@ -45,3 +45,5 @@ try {
 export function isFirebaseReady() {
   return Boolean(app && db);
 }
+
+export { db };
