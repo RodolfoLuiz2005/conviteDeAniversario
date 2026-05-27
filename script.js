@@ -3,6 +3,7 @@ import { db } from "./firebase.js";
 import {
   collection,
   addDoc,
+  getDocs,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
@@ -17,7 +18,7 @@ const el = (id) => {
 };
 
 // Esperar DOM estar pronto
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log("\n🚀 === DOM PRONTO ===\n");
 
   // ============================================
@@ -94,14 +95,28 @@ document.addEventListener("DOMContentLoaded", () => {
   // CONTADOR DE CONFIRMADOS
   // ============================================
   console.log("📍 Inicializando contador de confirmados...");
-  let confirmados = parseInt(localStorage.getItem("confirmados") || "0");
-  console.log("Valor atual no localStorage:", confirmados);
+  
 
   const contadorEl = el("contadorPessoas");
-  if (contadorEl) {
-    contadorEl.textContent = confirmados;
-    console.log("✅ Contador UI atualizado para:", confirmados, "\n");
+
+  async function atualizarContadorConfirmados() {
+    const snapshot = await getDocs(collection(db, "convidados"));
+    const total = snapshot.size;
+
+    console.log("🔥 Total no Firestore:", total);
+
+    if (contadorEl) {
+      contadorEl.textContent = total;
+
+      contadorEl.classList.add("pulse");
+      setTimeout(() => contadorEl.classList.remove("pulse"), 500);
+    }
+
+    return total;
+
   }
+
+  await atualizarContadorConfirmados();
 
   // ============================================
   // BOTÃO CONFIRMAR PRESENÇA
@@ -153,10 +168,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       console.log("✅ Convidado salvo no Firestore");
 
-      confirmados++;
-      localStorage.setItem("confirmados", String(confirmados));
-      console.log("✅ Salvou 'confirmados':", confirmados);
-
       localStorage.setItem("jaConfirmou", "sim");
       console.log("✅ Salvou 'jaConfirmou': sim");
 
@@ -176,10 +187,10 @@ document.addEventListener("DOMContentLoaded", () => {
       // Atualizar UI
       console.log("\n🎨 === ATUALIZANDO UI ===");
       if (contadorEl) {
-        contadorEl.textContent = confirmados;
+        await atualizarContadorConfirmados();
         contadorEl.classList.add("pulse");
         setTimeout(() => contadorEl.classList.remove("pulse"), 500);
-        console.log("✅ Contador UI atualizado para:", confirmados);
+        console.log("✅ Contador UI sincronizado com Firestore");
       }
 
       if (nomeInput) {
