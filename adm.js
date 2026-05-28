@@ -1,3 +1,10 @@
+import { db } from "./firebase.js";
+
+import {
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
 console.log("=== ADM.JS INICIANDO ===");
 
 // Verificar autenticação
@@ -16,7 +23,7 @@ console.log("✅ Usuário autenticado!\n");
 const el = (id) => document.getElementById(id);
 
 // Esperar DOM estar pronto
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 === DOM PRONTO ===\n");
 
   // ============================================
@@ -25,9 +32,16 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("📍 Carregando dados do localStorage...");
 
   // Tentar carregar confirmados
-  let confirmados = parseInt(localStorage.getItem("confirmados") || "0");
-  let convidados = JSON.parse(localStorage.getItem("convidados_local") || "[]");
+
+  const snapshot = await getDocs(collection(db, "convidados"));
+
+  let convidados = snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  }));
   
+  let confirmados = convidados.filter((c) => c.confirmado === true).length;
+
   console.log("Confirmados salvos:", confirmados);
   console.log("Convidados salvos:", convidados.length);
 
